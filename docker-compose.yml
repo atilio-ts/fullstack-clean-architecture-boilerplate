@@ -1,0 +1,82 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: development
+    container_name: atilio-backend-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=atilio_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/package.json:/app/package.json
+      - /app/node_modules
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: atilio-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - BACKEND_URL=http://localhost:3001/api
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/package.json:/app/package.json
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: atilio-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=atilio_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: atilio-flyway
+    command: -url=jdbc:postgresql://db:5432/atilio_db -user=postgres -password=postgres -connectRetries=60 migrate
+    volumes:
+      - ./database/migrations:/flyway/sql
+      - ./database/conf:/flyway/conf
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

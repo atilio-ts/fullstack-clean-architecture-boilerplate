@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: atilio-backend-prod
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/atilio_db
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=atilio_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    container_name: atilio-frontend-prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: atilio-db-prod
+    environment:
+      - POSTGRES_DB=atilio_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: atilio-flyway-prod
+    command: -url=jdbc:postgresql://db:5432/atilio_db -user=postgres -password=postgres -connectRetries=60 migrate
+    volumes:
+      - ./database/migrations:/flyway/sql
+      - ./database/conf:/flyway/conf
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

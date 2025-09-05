@@ -1,0 +1,13 @@
+{
+  "require": [
+    "./tests/mocha.env.js",
+    "source-map-support/register"
+  ],
+  "extensions": ["ts"],
+  "spec": "tests/**/*.test.ts",
+  "recursive": true,
+  "timeout": 10000,
+  "exit": true,
+  "colors": true,
+  "reporter": "spec"
+}
