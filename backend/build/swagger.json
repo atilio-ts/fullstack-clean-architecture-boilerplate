@@ -1,0 +1,167 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"HealthResponse": {
+				"description": "Health check response containing system status and metrics",
+				"properties": {
+					"status": {
+						"type": "string",
+						"description": "Current status of the API"
+					},
+					"timestamp": {
+						"type": "string",
+						"description": "ISO timestamp of when the health check was performed"
+					},
+					"uptime": {
+						"type": "number",
+						"format": "double",
+						"description": "Application uptime in seconds"
+					},
+					"environment": {
+						"type": "string",
+						"description": "Current environment (development, production, etc.)"
+					},
+					"version": {
+						"type": "string",
+						"description": "Application version"
+					},
+					"memory": {
+						"properties": {
+							"external": {
+								"type": "number",
+								"format": "double",
+								"description": "External memory in MB"
+							},
+							"total": {
+								"type": "number",
+								"format": "double",
+								"description": "Total heap memory in MB"
+							},
+							"used": {
+								"type": "number",
+								"format": "double",
+								"description": "Heap memory used in MB"
+							}
+						},
+						"required": [
+							"external",
+							"total",
+							"used"
+						],
+						"type": "object",
+						"description": "Memory usage statistics in MB"
+					},
+					"system": {
+						"properties": {
+							"pid": {
+								"type": "number",
+								"format": "double",
+								"description": "Process ID"
+							},
+							"nodeVersion": {
+								"type": "string",
+								"description": "Node.js version"
+							},
+							"platform": {
+								"type": "string",
+								"description": "Operating system platform"
+							}
+						},
+						"required": [
+							"pid",
+							"nodeVersion",
+							"platform"
+						],
+						"type": "object",
+						"description": "System information"
+					}
+				},
+				"required": [
+					"status",
+					"timestamp",
+					"uptime",
+					"environment",
+					"version",
+					"memory",
+					"system"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "Atilio API",
+		"version": "1.0.0",
+		"description": "Clean Architecture API with auto-generated Swagger documentation",
+		"license": {
+			"name": "ISC"
+		},
+		"contact": {}
+	},
+	"paths": {
+		"/health": {
+			"get": {
+				"operationId": "GetHealth",
+				"responses": {
+					"200": {
+						"description": "Health check successful",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HealthResponse"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"status": "OK",
+											"timestamp": "2023-09-06T10:30:00.000Z",
+											"uptime": 3600,
+											"environment": "development",
+											"version": "1.0.0",
+											"memory": {
+												"used": 25.5,
+												"total": 50,
+												"external": 5.2
+											},
+											"system": {
+												"platform": "linux",
+												"nodeVersion": "v18.17.0",
+												"pid": 12345
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"description": "Get application health status",
+				"summary": "Check API health and system information",
+				"tags": [
+					"Health"
+				],
+				"security": [],
+				"parameters": []
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "http://localhost:3001/api/v1"
+		}
+	],
+	"tags": [
+		{
+			"name": "Health",
+			"description": "API health and system information"
+		}
+	]
+}

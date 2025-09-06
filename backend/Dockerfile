@@ -14,6 +14,7 @@ RUN npm ci --only=production && npm cache clean --force
 FROM base AS development
 RUN npm ci
 COPY . .
+RUN npm run tsoa:spec
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 

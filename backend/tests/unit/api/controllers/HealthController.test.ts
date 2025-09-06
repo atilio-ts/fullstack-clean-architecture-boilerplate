@@ -1,33 +1,14 @@
 import { expect } from 'chai';
-import { Request, Response } from 'express';
 import sinon from 'sinon';
 import { HealthController } from '../../../../src/api/controllers/HealthController';
+import { HealthResponse } from '../../../../src/api/dto/HealthResponse';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  let req: Partial<Request>;
-  let res: Partial<Response>;
-  let statusStub: sinon.SinonStub;
-  let jsonStub: sinon.SinonStub;
-  let typeStub: sinon.SinonStub;
   let processStubs: any = {};
 
   beforeEach(() => {
     controller = new HealthController();
-    
-    jsonStub = sinon.stub();
-    statusStub = sinon.stub();
-    typeStub = sinon.stub();
-
-    statusStub.returns({ json: jsonStub });
-    
-    res = {
-      status: statusStub,
-      json: jsonStub,
-      type: typeStub
-    };
-
-    req = {};
 
     // Stub process methods
     processStubs.uptime = sinon.stub(process, 'uptime').returns(123.45);
@@ -51,30 +32,23 @@ describe('HealthController', () => {
     delete process.env.npm_package_version;
   });
 
-  describe('checkHealth', () => {
+  describe('getHealth', () => {
     it('should return health status with all required fields', async () => {
-      const result = await controller.checkHealth(req as Request, res as Response);
-
-      expect(statusStub.calledWith(200)).to.be.true;
-      expect(typeStub.calledWith('application/json')).to.be.true;
+      const result: HealthResponse = await controller.getHealth();
       
-      const healthStatus = jsonStub.getCall(0).args[0];
-      
-      expect(healthStatus).to.have.property('status', 'OK');
-      expect(healthStatus).to.have.property('timestamp');
-      expect(healthStatus).to.have.property('uptime', 123.45);
-      expect(healthStatus).to.have.property('environment', 'test');
-      expect(healthStatus).to.have.property('version', '1.0.0');
-      expect(healthStatus).to.have.property('memory');
-      expect(healthStatus).to.have.property('system');
+      expect(result).to.have.property('status', 'OK');
+      expect(result).to.have.property('timestamp');
+      expect(result).to.have.property('uptime', 123.45);
+      expect(result).to.have.property('environment', 'test');
+      expect(result).to.have.property('version', '1.0.0');
+      expect(result).to.have.property('memory');
+      expect(result).to.have.property('system');
     });
 
     it('should return correct memory information', async () => {
-      await controller.checkHealth(req as Request, res as Response);
+      const result: HealthResponse = await controller.getHealth();
       
-      const healthStatus = jsonStub.getCall(0).args[0];
-      
-      expect(healthStatus.memory).to.deep.equal({
+      expect(result.memory).to.deep.equal({
         used: 20, // 20 MB
         total: 30, // 30 MB  
         external: 5 // 5 MB
@@ -82,59 +56,59 @@ describe('HealthController', () => {
     });
 
     it('should return correct system information', async () => {
-      await controller.checkHealth(req as Request, res as Response);
+      const result: HealthResponse = await controller.getHealth();
       
-      const healthStatus = jsonStub.getCall(0).args[0];
-      
-      expect(healthStatus.system).to.have.property('platform', process.platform);
-      expect(healthStatus.system).to.have.property('nodeVersion', process.version);
-      expect(healthStatus.system).to.have.property('pid', process.pid);
+      expect(result.system).to.have.property('platform', process.platform);
+      expect(result.system).to.have.property('nodeVersion', process.version);
+      expect(result.system).to.have.property('pid', process.pid);
     });
 
     it('should use default values when environment variables are not set', async () => {
       delete process.env.NODE_ENV;
       delete process.env.npm_package_version;
 
-      await controller.checkHealth(req as Request, res as Response);
+      const result: HealthResponse = await controller.getHealth();
       
-      const healthStatus = jsonStub.getCall(0).args[0];
-      
-      expect(healthStatus.environment).to.equal('development');
-      expect(healthStatus.version).to.equal('1.0.0');
+      expect(result.environment).to.equal('development');
+      expect(result.version).to.equal('1.0.0');
     });
 
     it('should return timestamp as ISO string', async () => {
       const beforeCall = new Date();
-      await controller.checkHealth(req as Request, res as Response);
+      const result: HealthResponse = await controller.getHealth();
       const afterCall = new Date();
       
-      const healthStatus = jsonStub.getCall(0).args[0];
-      const timestamp = new Date(healthStatus.timestamp);
+      const timestamp = new Date(result.timestamp);
       
       expect(timestamp).to.be.at.least(beforeCall);
       expect(timestamp).to.be.at.most(afterCall);
-      expect(healthStatus.timestamp).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(result.timestamp).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     });
 
-    it('should handle errors and return 500 status', async () => {
+    it('should throw error when process operations fail', async () => {
       // Force an error by making process.uptime throw
       processStubs.uptime.throws(new Error('Process error'));
 
-      await controller.checkHealth(req as Request, res as Response);
-
-      expect(statusStub.calledWith(500)).to.be.true;
-      expect(jsonStub.calledWith({ message: 'Internal server error' })).to.be.true;
+      try {
+        await controller.getHealth();
+        expect.fail('Expected method to throw');
+      } catch (error) {
+        expect(error).to.be.instanceof(Error);
+        expect((error as Error).message).to.include('Health check failed: Process error');
+      }
     });
 
-    it('should log errors when they occur', async () => {
-      const consoleStub = sinon.stub(console, 'log');
-      const error = new Error('Test error');
-      processStubs.uptime.throws(error);
+    it('should handle unknown errors gracefully', async () => {
+      // Force an error by making process.uptime throw a non-Error object
+      processStubs.uptime.throws('Unknown error');
 
-      await controller.checkHealth(req as Request, res as Response);
-
-      expect(consoleStub.calledWith(error)).to.be.true;
-      consoleStub.restore();
+      try {
+        await controller.getHealth();
+        expect.fail('Expected method to throw');
+      } catch (error) {
+        expect(error).to.be.instanceof(Error);
+        expect((error as Error).message).to.include('Health check failed:');
+      }
     });
   });
 });
