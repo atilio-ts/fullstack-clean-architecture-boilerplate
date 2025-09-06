@@ -62,7 +62,7 @@ services:
       - app-network
 
   flyway:
-    image: flyway/flyway:latest
+    image: flyway/flyway:10-alpine
     container_name: atilio-flyway
     command: -url=jdbc:postgresql://db:5432/atilio_db -user=postgres -password=postgres -connectRetries=60 migrate
     volumes:
