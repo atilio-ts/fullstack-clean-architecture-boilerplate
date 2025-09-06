@@ -1,16 +1,16 @@
 # Atilio Frontend
 
-Modern React frontend application built with TypeScript, Vite, and Ant Design.
+Modern React frontend application built with TypeScript, Vite, and Ant Design. Features auto-generated type-safe API client from backend Swagger documentation.
 
 ## 🚀 Tech Stack
 
-- **React 19** - Modern component-based UI library
-- **TypeScript** - Type-safe JavaScript superset
+- **React 19** - Modern component-based UI library with latest features
+- **TypeScript** - Type-safe JavaScript superset with strict configuration
 - **Vite** - Fast build tool and development server
 - **Ant Design** - Professional UI component library
 - **React Router Dom** - Client-side routing
 - **Axios** - HTTP client for API communication
-- **Day.js** - Modern date manipulation library
+- **swagger-typescript-api** - Auto-generated type-safe API client
 
 ## 🛠️ Prerequisites
 
@@ -38,38 +38,38 @@ docker-compose up --build
 # Frontend will be available at http://localhost:3000
 ```
 
-## 📁 Project Structure
+## 📁 Clean Project Structure
 
 ```
-frontend/src/
-├── components/              # Reusable React components
-│   └── common/             # Shared components
-│       ├── AppLayout.tsx   # Main application layout
-│       └── AppRouter.tsx   # Application routing configuration
-├── pages/                  # Page-level components
-│   ├── Dashboard.tsx       # Dashboard page
-│   ├── Home.tsx           # Home page
-│   └── Settings.tsx       # Settings page
-├── services/              # API communication
-│   └── api.ts             # Axios configuration and API services
-├── hooks/                 # Custom React hooks
-│   └── useApi.ts          # Custom hook for API calls
-├── types/                 # TypeScript type definitions
-│   └── index.ts           # Shared type definitions
-├── styles/                # Styling files
-│   ├── global.css         # Global CSS styles
-│   └── theme.ts           # Ant Design theme configuration
-├── utils/                 # Utility functions
-│   └── helpers.ts         # Helper functions
-├── constants/             # Application constants
-│   └── routes.ts          # Route constants
-├── assets/                # Static assets
-│   └── react.svg          # React logo
-├── App.tsx                # Main App component
-├── App.css                # App-specific styles
-├── main.tsx               # Application entry point
-└── vite-env.d.ts          # Vite environment types
+src/
+├── api/                    # Generated TypeScript API client
+│   ├── api.ts             # Auto-generated from Swagger (DO NOT EDIT)
+│   ├── index.ts           # API client configuration and utilities
+│   └── README.md          # API usage documentation
+├── components/            # Reusable React components
+│   └── common/           # Shared components
+│       ├── AppLayout.tsx # Main application layout with responsive design
+│       └── AppRouter.tsx # Route configuration and routing
+├── constants/            # Application constants
+│   └── routes.ts         # Route path definitions
+├── pages/               # Page-level components (templates)
+│   ├── Dashboard.tsx    # Dashboard with live API health demo
+│   ├── Home.tsx         # Landing page template
+│   └── Settings.tsx     # Settings form template
+├── styles/              # Theme and styling
+│   └── theme.ts         # Ant Design theme configuration
+├── types/               # TypeScript type definitions
+│   └── index.ts         # Shared types and interfaces
+├── App.tsx              # Root application component
+├── main.tsx             # Application entry point
+└── vite-env.d.ts        # Vite type definitions
 ```
+
+### Key Features
+- ✅ **Clean Architecture** - No unused files or dependencies
+- ✅ **Type-Safe API Client** - Auto-generated from backend Swagger docs
+- ✅ **Zero Errors** - No TypeScript or ESLint warnings
+- ✅ **Modern Patterns** - React 19 with latest best practices
 
 ## 🛠️ Development Commands
 
@@ -95,6 +95,12 @@ npm run lint
 # Fix linting issues automatically
 npm run lint:fix
 
+# Generate API client from backend Swagger docs
+npm run api:generate
+
+# Generate API client and run type check
+npm run api:generate-watch
+
 # Build Docker image
 npm run docker:build
 
@@ -116,46 +122,72 @@ npm run docker:run
 ### Shared Components
 Located in `src/components/common/` for reusable UI elements.
 
-## 🌐 API Integration
+## 🌐 Type-Safe API Integration
 
-### API Service
-The `src/services/api.ts` file contains:
-- Axios configuration
-- Base URL configuration
-- Request/response interceptors
-- API endpoint methods
+### Generated API Client
+The frontend uses `swagger-typescript-api` to automatically generate a type-safe API client from the backend's Swagger documentation.
 
-### Custom Hook
-`src/hooks/useApi.ts` provides:
-- Reusable API call logic
-- Loading state management
-- Error handling
-- Response caching
+#### Key Benefits
+- ✅ **Full Type Safety** - Complete TypeScript support for all API calls
+- ✅ **Auto-Sync** - Client stays in sync with backend API changes
+- ✅ **IntelliSense** - IDE auto-completion and error detection
+- ✅ **Authentication** - JWT token handling built-in
+- ✅ **Error Handling** - Automatic 401 logout and error processing
 
-Example usage:
+#### Usage Examples
 ```typescript
-import { useApi } from '../hooks/useApi';
+// Simple API usage with utility function
+import { checkHealth } from '@/api';
+const healthData = await checkHealth();
 
-const MyComponent = () => {
-  const { data, loading, error } = useApi('/api/endpoint');
-  
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  
-  return <div>{JSON.stringify(data)}</div>;
-};
+// Direct API client usage with full typing
+import { healthApi, type HealthResponse } from '@/api';
+const response = await healthApi.getHealth();
+console.log(response.data.status); // Fully typed!
+
+// Using the configured client instance
+import { apiClient } from '@/api';
+const customCall = await apiClient.health.getHealth();
+```
+
+#### API Client Structure
+- `src/api/api.ts` - **Auto-generated** client (DO NOT EDIT)
+- `src/api/index.ts` - Configuration, interceptors, and utilities
+- `src/api/README.md` - Comprehensive usage documentation
+
+#### Regeneration Workflow
+When backend APIs change:
+```bash
+# Regenerate the TypeScript client
+npm run api:generate
+
+# Or regenerate and type-check in one command
+npm run api:generate-watch
 ```
 
 ## 🎯 TypeScript Configuration
 
 ### Type Definitions
-- **Shared types**: `src/types/index.ts`
+- **API types**: Auto-generated from Swagger (`src/api/api.ts`)
+- **Shared types**: Manual definitions in `src/types/index.ts`
 - **Component props**: Defined inline or in component files
-- **API responses**: Defined in service files
+
+### Path Aliases
+Configured TypeScript/Vite path mappings for cleaner imports:
+```typescript
+// Available path aliases
+"@/*" → "src/*"
+"@/api/*" → "src/api/*"
+"@/components/*" → "src/components/*"
+"@/pages/*" → "src/pages/*"
+"@/types/*" → "src/types/*"
+"@/constants/*" → "src/constants/*"
+"@/styles/*" → "src/styles/*"
+```
 
 ### TSConfig Files
-- `tsconfig.json`: Main TypeScript configuration
-- `tsconfig.app.json`: Application-specific config
+- `tsconfig.json`: Main TypeScript configuration references
+- `tsconfig.app.json`: Application-specific config with strict mode
 - `tsconfig.node.json`: Node.js/build tools config
 
 ## 🎨 Styling & Theming
@@ -195,21 +227,80 @@ Create `.env` file from `.env.example`:
 cp .env.example .env
 ```
 
-## 🧪 Testing & Quality
+## 🧪 Code Quality & Standards
 
-### Code Quality Tools
-- **ESLint**: Code linting and style enforcement
-- **TypeScript**: Static type checking
-- **Vite**: Fast build and hot reload
+### Current Quality Status
+- ✅ **Zero TypeScript errors** - Strict mode enabled
+- ✅ **Zero ESLint warnings** - All linting rules pass
+- ✅ **Clean dependencies** - No unused packages
+- ✅ **Type-safe API calls** - Full end-to-end type safety
 
-### Available Scripts
-- `npm run lint`: Run ESLint
-- `npm run lint:fix`: Fix auto-fixable linting issues
-- `npm run typecheck`: Run TypeScript compiler check
+### Quality Tools
+- **ESLint** - Code linting with React and TypeScript rules
+- **TypeScript** - Strict type checking with exhaustive dependency checks
+- **Vite** - Fast build validation and hot reload
+
+### Development Guidelines
+1. **Type Safety First** - Use TypeScript throughout, avoid `any` types
+2. **Use Generated API Client** - Don't create manual HTTP requests
+3. **Follow Existing Patterns** - Look at existing components for guidance
+4. **Path Aliases** - Use `@/` imports for cleaner code
+5. **Component Focus** - Keep components small and single-purpose
+
+### Quality Scripts
+- `npm run lint` - Check code style and formatting
+- `npm run lint:fix` - Auto-fix linting issues
+- `npm run typecheck` - Validate TypeScript types
+- `npm run api:generate-watch` - Regenerate API client with validation
+
+## 🔄 API Client Workflow
+
+### Initial Setup (Already Done)
+The project is pre-configured with a working API client generated from your backend's health endpoint.
+
+### When Backend APIs Change
+1. **Backend updates** - When new endpoints are added to the backend
+2. **Regenerate client** - Run `npm run api:generate` 
+3. **Type validation** - TypeScript will catch any breaking changes
+4. **Update components** - Add new API calls with full type safety
+
+### Demo Implementation
+The **Dashboard** page demonstrates real API integration:
+```typescript
+// Live example in src/pages/Dashboard.tsx
+import { checkHealth, type HealthResponse } from '@/api';
+
+const [healthData, setHealthData] = useState<HealthResponse | null>(null);
+const data = await checkHealth(); // Fully typed!
+```
+
+### Adding New Endpoints
+When backend adds new endpoints:
+1. New endpoints automatically available after `npm run api:generate`
+2. Import new functions from `@/api` 
+3. Full TypeScript support with autocomplete
+4. Error handling and authentication built-in
 
 ## 🔍 Troubleshooting
 
 ### Common Issues
+
+**API Client Generation Errors**
+```bash
+# If API generation fails, ensure backend is running and swagger.json exists
+npm run api:generate
+
+# Check if backend swagger.json is accessible
+curl http://localhost:3001/api/v1/docs/swagger.json
+```
+
+**TypeScript Errors After API Regeneration**
+```bash
+# Clear TypeScript cache and regenerate
+rm -rf node_modules/.cache
+npm run api:generate
+npm run typecheck
+```
 
 **Node.js Version Error**
 ```
@@ -234,10 +325,24 @@ npm install
 rm -rf .vite
 ```
 
+**API Connection Issues**
+- Ensure backend is running on `http://localhost:3001`
+- Check if health endpoint responds: `curl http://localhost:3001/api/v1/health`
+- Verify Docker containers are running: `docker-compose ps`
+
 ## 📚 Resources
 
-- [React 19 Documentation](https://react.dev/)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Vite Documentation](https://vitejs.dev/)
-- [Ant Design Components](https://ant.design/components/overview/)
-- [React Router Documentation](https://reactrouter.com/)
+### Documentation
+- [React 19 Documentation](https://react.dev/) - Latest React features and patterns
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/) - TypeScript language guide
+- [Vite Documentation](https://vitejs.dev/) - Fast build tool and dev server
+- [Ant Design Components](https://ant.design/components/overview/) - UI component library
+- [React Router Documentation](https://reactrouter.com/) - Client-side routing
+
+### API Integration
+- [swagger-typescript-api](https://github.com/acacode/swagger-typescript-api) - API client generator
+- [Axios Documentation](https://axios-http.com/) - HTTP client library
+- **Local API Docs**: `src/api/README.md` - Comprehensive usage guide
+
+### Project Structure
+This README contains the complete project documentation. The frontend is clean, optimized, and ready for development with excellent templates and clear patterns to follow.

@@ -6,7 +6,13 @@ const { Title } = Typography;
 const Settings: React.FC = () => {
   const [form] = Form.useForm();
 
-  const onFinish = (values: any) => {
+  const onFinish = (values: {
+    appName?: string;
+    description?: string;
+    notifications: boolean;
+    darkMode: boolean;
+    autoSave: boolean;
+  }) => {
     console.log('Settings updated:', values);
   };
 

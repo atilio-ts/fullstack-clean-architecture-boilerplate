@@ -78,7 +78,8 @@ The scripts will:
 
 - **Frontend:** http://localhost:3000 - React application
 - **Backend API:** http://localhost:3001 - Express.js API server
-- **Health Check:** http://localhost:3001/health - Backend health endpoint
+- **Health Check:** http://localhost:3001/api/v1/health - Backend health endpoint
+- **API Docs:** http://localhost:3001/api/v1/docs - Swagger documentation
 - **Database:** localhost:5432 - PostgreSQL database server
 
 ### 📊 Service Status
@@ -93,7 +94,7 @@ docker-compose ps
 docker-compose logs -f
 
 # Check backend health
-curl http://localhost:3001/health
+curl http://localhost:3001/api/v1/health
 
 # Check frontend is serving
 curl http://localhost:3000
@@ -210,7 +211,6 @@ atilio-test/
 │   │   └── V2__Add_sample_data.sql
 │   ├── conf/                 # Flyway configuration
 │   │   └── flyway.conf
-│   ├── init.sql.deprecated   # Legacy initialization (deprecated)
 │   └── README.md             # Database documentation
 ├── docker-compose.yml         # Development environment
 ├── docker-compose.prod.yml    # Production environment

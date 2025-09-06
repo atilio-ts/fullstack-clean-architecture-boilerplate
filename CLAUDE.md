@@ -8,11 +8,13 @@ This file provides comprehensive guidance to Claude Code (claude.ai/code) when w
 
 ### Tech Stack Summary
 - **Backend**: Node.js 22 + TypeScript + Express.js + Clean Architecture
-- **Frontend**: React 19 + TypeScript + Vite + Ant Design
-- **Database**: PostgreSQL 15 + Flyway migrations
-- **Testing**: Mocha + Chai + Sinon + NYC (80%+ coverage)
+- **Frontend**: React 19 + TypeScript + Vite + Ant Design + swagger-typescript-api
+- **Database**: PostgreSQL 15 + Flyway migrations + UUID primary keys
+- **Testing**: Mocha + Chai + Sinon + NYC (96 tests, 95%+ coverage)
+- **API Integration**: Auto-generated TypeScript clients from Swagger/OpenAPI
+- **Documentation**: TSOA-generated Swagger docs + Comprehensive README files
 - **Infrastructure**: Docker + Docker Compose
-- **Development**: Hot reload, TypeScript checking, ESLint
+- **Development**: Hot reload, TypeScript checking, ESLint, Path aliases
 
 ### Repository Structure
 ```
@@ -56,7 +58,7 @@ atilio-test/
 
 ## 🏗️ Backend Architecture
 
-The backend implements Clean Architecture with strict separation of concerns:
+The backend implements Clean Architecture with strict separation of concerns and comprehensive API documentation:
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -78,10 +80,10 @@ The backend implements Clean Architecture with strict separation of concerns:
 ```
 backend/src/
 ├── api/                    # 🌐 API Layer (HTTP interface)
-│   ├── controllers/        # HTTP request handlers
+│   ├── controllers/        # HTTP request handlers with TSOA decorators
 │   ├── middleware/         # Express middleware
-│   ├── routes/            # API route definitions
-│   └── dto/               # Data Transfer Objects
+│   ├── routes/            # API route definitions + docs route
+│   └── dto/               # Data Transfer Objects for type safety
 ├── application/           # ⚙️ Application Layer (business workflows)
 │   ├── services/          # Application services
 │   ├── usecases/          # Use case implementations
@@ -125,10 +127,12 @@ backend/src/
    - Integrate external services in `infrastructure/external/`
 
 4. **🌐 API Exposure**:
-   - Create controllers in `api/controllers/`
+   - Create controllers in `api/controllers/` with TSOA decorators
    - Define routes in `api/routes/`
-   - Add DTOs in `api/dto/`
+   - Add DTOs in `api/dto/` for request/response validation
    - Configure middleware in `api/middleware/`
+   - Update `tsoa.json` configuration for Swagger generation
+   - Run `npm run build:swagger` to generate API documentation
 
 ## 🧪 Testing Framework
 
@@ -173,10 +177,10 @@ npm run test:coverage      # Generate coverage report
 ```
 
 ### Coverage Requirements
-- **Statements**: 80%+ required, currently 100%
-- **Branches**: 80%+ required, currently 100%  
-- **Functions**: 80%+ required, currently 100%
-- **Lines**: 80%+ required, currently 100%
+- **Statements**: 80%+ required, currently 95%+
+- **Branches**: 80%+ required, currently 95%+  
+- **Functions**: 80%+ required, currently 95%+
+- **Lines**: 80%+ required, currently 95%+
 
 ### Architecture Validation
 The test suite includes automated validation of Clean Architecture principles:
@@ -190,24 +194,28 @@ The test suite includes automated validation of Clean Architecture principles:
 ### Technology Stack
 - **React 19**: Modern component-based UI library
 - **TypeScript**: Type safety and better developer experience
-- **Vite**: Fast build tool and development server
+- **Vite**: Fast build tool and development server with path aliases (@/)
 - **Ant Design**: Professional UI component library
 - **React Router**: Client-side routing
-- **Axios**: HTTP client for API communication
+- **swagger-typescript-api**: Auto-generated TypeScript API clients
+- **Axios**: HTTP client with authentication and error interceptors
 
 ### Project Structure
 ```
 frontend/src/
+├── api/                  # Auto-generated API client integration
+│   ├── api.ts           # Generated TypeScript API client from Swagger
+│   └── index.ts         # API client configuration with interceptors
 ├── components/            # Reusable React components
 │   └── common/           # Shared components across the app
 │       ├── AppLayout.tsx # Responsive layout with sidebar navigation
 │       └── AppRouter.tsx # Route configuration and routing
 ├── pages/                # Page-level components
 │   ├── Home.tsx          # Landing page with feature cards
-│   ├── Dashboard.tsx     # Main dashboard interface
+│   ├── Dashboard.tsx     # Main dashboard interface with API integration
 │   └── Settings.tsx      # Application settings
 ├── services/             # API communication services
-├── hooks/                # Custom React hooks
+├── hooks/                # Custom React hooks (useApi, etc.)
 ├── types/                # TypeScript type definitions
 ├── styles/               # CSS and theme files
 │   ├── global.css        # Global styles and layout fixes
@@ -224,13 +232,26 @@ frontend/src/
 - **Mobile Optimization**: Auto-collapse sidebar on mobile devices (≤768px)
 - **Sticky Header**: Persistent header with navigation controls
 
+### API Integration Workflow
+- **Auto-Generated Clients**: TypeScript API clients generated from backend Swagger specs
+- **Type Safety**: Full type safety for API requests and responses
+- **Error Handling**: Centralized error handling with interceptors
+- **Authentication**: Built-in authentication token management
+- **Development Workflow**: `npm run api:generate` to regenerate clients from backend changes
+
 ## 🐳 Docker Configuration
 
 ### Container Architecture
 - **Frontend Container**: `node:22-alpine` → Vite dev server (port 3000)
-- **Backend Container**: `node:22-alpine` → Express.js API (port 3001)
+- **Backend Container**: `node:22-alpine` → Express.js API (port 3001) 
 - **Database Container**: `postgres:15-alpine` → PostgreSQL (port 5432)
 - **Flyway Container**: `flyway:10-alpine` → Database migrations (runs once, then exits)
+
+### Docker Compose Configuration
+- **Development**: `docker-compose.yml` with hot reload volumes and development settings
+- **Production**: `docker-compose.prod.yml` with optimized builds and Nginx serving
+- **Consistent Flyway Version**: Both environments use `flyway:10-alpine` for migration consistency
+- **Service Dependencies**: Backend waits for successful migrations before starting
 
 ### Environment Files
 - `backend/.env.example` → Copy to `backend/.env` for local development
@@ -272,6 +293,9 @@ cd backend
 npm run dev          # Start with hot reload
 npm run typecheck    # Type checking
 npm run build        # Build for production
+npm run build:swagger # Generate Swagger documentation
+npm test            # Run comprehensive test suite (96 tests)
+npm run test:watch   # TDD development with watch mode
 
 # Frontend development  
 cd frontend
@@ -279,6 +303,7 @@ npm run dev          # Start Vite dev server
 npm run lint         # Check code style
 npm run typecheck    # Type checking
 npm run build        # Build for production
+npm run api:generate # Generate TypeScript API client from backend Swagger
 ```
 
 ## 🗄️ Database Management
@@ -295,12 +320,12 @@ The project uses **Flyway** for database schema management with PostgreSQL.
 #### Migration Structure
 ```
 database/
-├── migrations/           # Flyway SQL migration files
-│   ├── V1__Initial_schema.sql
-│   └── V2__Add_sample_data.sql
-├── conf/                # Flyway configuration
-│   └── flyway.conf
-└── README.md            # Detailed database documentation
+├── migrations/           # Flyway SQL migration files (production-ready)
+│   ├── V1__Initial_schema.sql    # Users table with UUID primary keys
+│   └── V2__Add_sample_data.sql   # 3 development users for testing
+├── conf/                # Flyway configuration with validation rules
+│   └── flyway.conf             # Production-ready migration settings
+└── README.md            # Comprehensive database workflow documentation
 ```
 
 #### Development Workflow
@@ -335,13 +360,20 @@ npm run db:validate
 2. **Write SQL statements**:
    ```sql
    -- V3__Add_posts_table.sql
+   -- Add posts table for blog functionality
    CREATE TABLE posts (
        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
        title VARCHAR(255) NOT NULL,
        content TEXT,
-       user_id UUID REFERENCES users(id),
-       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+       published BOOLEAN DEFAULT false,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
    );
+   
+   -- Add indexes for common queries
+   CREATE INDEX idx_posts_user_id ON posts(user_id);
+   CREATE INDEX idx_posts_published ON posts(published);
    ```
 
 3. **Test migration**:
@@ -398,7 +430,8 @@ For comprehensive database documentation, see `database/README.md`.
 **Backend Infrastructure**:
 - ✅ Clean Architecture implementation with 4 distinct layers
 - ✅ Express.js API with health endpoints (`/api/v1/health`)
-- ✅ TypeScript configuration with strict mode
+- ✅ TSOA-generated Swagger documentation (`/api/v1/docs`)
+- ✅ TypeScript configuration with strict mode and zero `any` types
 - ✅ Docker containerization with Node.js 22
 - ✅ PostgreSQL integration with proper configuration
 
@@ -416,12 +449,15 @@ For comprehensive database documentation, see `database/README.md`.
 - ✅ Mocha + Chai + Sinon + NYC setup
 
 **Frontend Implementation**:
-- ✅ React 19 + TypeScript + Vite setup
-- ✅ Ant Design UI components
+- ✅ React 19 + TypeScript + Vite setup with path aliases (@/)
+- ✅ swagger-typescript-api integration for type-safe API calls
+- ✅ Auto-generated TypeScript clients from backend Swagger specs
+- ✅ Ant Design UI components with fixed icon imports
 - ✅ Responsive layout with collapsible sidebar
 - ✅ Mobile-optimized navigation (≤768px breakpoint)
 - ✅ Full-width layout (removed 1280px restriction)
 - ✅ React Router with proper navigation
+- ✅ Real API integration demonstrated in Dashboard component
 
 **Development Workflow**:
 - ✅ Docker Compose orchestration
@@ -439,19 +475,52 @@ For comprehensive database documentation, see `database/README.md`.
 - **Migrations**: ✅ Flyway successfully applied
 
 **Code Quality**:
-- **Backend Tests**: ✅ 96/96 passing (100% coverage)
-- **Frontend**: ✅ Responsive layout working
-- **TypeScript**: ✅ Strict mode enabled
-- **Docker**: ✅ Multi-container setup operational
+- **Backend Tests**: ✅ 96/96 passing (95%+ coverage) with architecture validation
+- **Frontend**: ✅ Zero TypeScript errors, zero ESLint warnings
+- **API Integration**: ✅ Type-safe communication between frontend and backend
+- **TypeScript**: ✅ Strict mode enabled across all projects
+- **Docker**: ✅ Multi-container setup with consistent Flyway versions
+- **Documentation**: ✅ Comprehensive README files for all components
 
 ### 🎯 Ready for Next Development
 
 The project is now in an excellent state for continued development with:
-- Solid architectural foundation
-- Comprehensive testing coverage
-- Responsive UI components
-- Database migration management
-- Full development environment
+- **Solid architectural foundation** with Clean Architecture and SOLID principles
+- **Comprehensive testing coverage** (96 tests, 95%+ coverage, architecture validation)
+- **Type-safe API integration** with auto-generated TypeScript clients
+- **Production-ready database** with UUID primary keys and proper migrations
+- **Full development environment** with Docker, hot reload, and automated setup
+- **Zero technical debt** after comprehensive integrity checks across all components
+- **Complete documentation** for efficient development workflow
+
+### 🧹 Recent Integrity Improvements (September 2025)
+
+**Frontend Cleanup**:
+- ✅ Integrated swagger-typescript-api for type-safe API calls
+- ✅ Fixed Ant Design icon imports (MemoryOutlined → DatabaseOutlined)
+- ✅ Eliminated all `any` types and TypeScript errors
+- ✅ Added path aliases (@/) for cleaner imports
+- ✅ Updated comprehensive README with API workflow
+
+**Backend Cleanup**:
+- ✅ Achieved 96/96 tests passing with 95%+ coverage
+- ✅ Zero TypeScript errors with strict mode enabled
+- ✅ Clean Architecture validation automated in tests
+- ✅ TSOA-generated Swagger documentation
+- ✅ Updated comprehensive README with development workflow
+
+**Database Cleanup**:
+- ✅ Removed deprecated `init.sql.deprecated` file
+- ✅ Validated migration integrity (V1, V2 applied successfully)
+- ✅ Production-ready schema with UUID primary keys and indexes
+- ✅ Complete workflow documentation with migration patterns
+
+**Root Directory Cleanup**:
+- ✅ Fixed Docker Compose Flyway version consistency (`flyway:10-alpine`)
+- ✅ Removed outdated `run.sh.backup` file
+- ✅ Updated README.md with correct health endpoint URLs
+- ✅ Added API documentation endpoint references
+- ✅ Validated all configuration files
 
 ## 🔍 Troubleshooting Common Issues
 
@@ -489,14 +558,20 @@ The project is now in an excellent state for continued development with:
 3. Maintain type safety with TypeScript
 4. Keep components small and focused
 5. Use established patterns from existing components
+6. **API Integration**: Use auto-generated API clients from `src/api/` 
+7. **Type Safety**: Leverage generated TypeScript interfaces from backend
+8. **Path Aliases**: Use `@/` imports for cleaner code organization
 
 ### Testing & Validation
-- **Backend**: Run `npm test` for full test suite with coverage
+- **Backend**: Run `npm test` for full test suite with coverage (96 tests, 95%+)
 - **Backend**: Use `npm run test:watch` for TDD development
 - **Backend**: Always run `npm run typecheck` after TypeScript changes
+- **Backend**: Run `npm run build:swagger` to update API documentation
 - **Frontend**: Use `npm run lint` and `npm run typecheck` for code quality
+- **Frontend**: Run `npm run api:generate` after backend API changes
 - **Integration**: Test Docker setup with `docker-compose up --build` after changes
 - **Database**: Verify migrations with `npm run db:info` and `npm run db:validate`
-- Verify health endpoints are accessible
+- **Health Check**: Verify http://localhost:3001/api/v1/health is accessible
+- **API Documentation**: Check http://localhost:3001/api/v1/docs for Swagger UI
 
 Remember: This project prioritizes **clean architecture**, **type safety**, and **maintainable code** over quick solutions.
