@@ -1,10 +1,35 @@
-import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
+import { Route, Get, Tags, SuccessResponse, Example, Controller } from 'tsoa';
+import { HealthResponse } from '../dto/HealthResponse';
 
-export class HealthController extends BaseController {
-  public async checkHealth(req: Request, res: Response): Promise<Response> {
+@Route('health')
+@Tags('Health')
+export class HealthController extends Controller {
+  /**
+   * Get application health status
+   * @summary Check API health and system information
+   */
+  @Get()
+  @SuccessResponse('200', 'Health check successful')
+  @Example<HealthResponse>({
+    status: 'OK',
+    timestamp: '2023-09-06T10:30:00.000Z',
+    uptime: 3600,
+    environment: 'development',
+    version: '1.0.0',
+    memory: {
+      used: 25.5,
+      total: 50.0,
+      external: 5.2
+    },
+    system: {
+      platform: 'linux',
+      nodeVersion: 'v18.17.0',
+      pid: 12345
+    }
+  })
+  public async getHealth(): Promise<HealthResponse> {
     try {
-      const healthStatus = {
+      const healthStatus: HealthResponse = {
         status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
@@ -22,9 +47,9 @@ export class HealthController extends BaseController {
         }
       };
 
-      return this.ok(res, healthStatus);
+      return healthStatus;
     } catch (error) {
-      return this.fail(res, error as Error);
+      throw new Error(`Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }
