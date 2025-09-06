@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "start": "npm run dev",
     "docker:build": "docker build -t atilio-frontend .",
-    "docker:run": "docker run -p 3000:80 atilio-frontend"
+    "docker:run": "docker run -p 3000:80 atilio-frontend",
+    "api:generate": "swagger-typescript-api generate -p ../backend/build/swagger.json -o ./src/api -n api.ts --axios",
+    "api:generate-watch": "swagger-typescript-api generate -p ../backend/build/swagger.json -o ./src/api -n api.ts --axios && npm run typecheck"
   },
   "dependencies": {
     "antd": "^5.27.2",
@@ -32,6 +34,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "swagger-typescript-api": "^13.2.9",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"

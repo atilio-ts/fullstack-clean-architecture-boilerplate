@@ -17,7 +17,7 @@ services:
     volumes:
       - ./backend/src:/app/src
       - ./backend/package.json:/app/package.json
-      - /app/node_modules
+      - ./backend/package-lock.json:/app/package-lock.json
     depends_on:
       flyway:
         condition: service_completed_successfully
@@ -39,7 +39,7 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/package.json:/app/package.json
-      - /app/node_modules
+      - ./frontend/package-lock.json:/app/package-lock.json
     depends_on:
       - backend
     restart: unless-stopped
@@ -62,7 +62,7 @@ services:
       - app-network
 
   flyway:
-    image: flyway/flyway:10-alpine
+    image: flyway/flyway:latest
     container_name: atilio-flyway
     command: -url=jdbc:postgresql://db:5432/atilio_db -user=postgres -password=postgres -connectRetries=60 migrate
     volumes:
