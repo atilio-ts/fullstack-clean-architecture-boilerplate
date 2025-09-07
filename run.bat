@@ -95,89 +95,53 @@ goto :main
     call :log_info "Checking backend setup..."
     
     if not exist "backend\node_modules" (
-        call :promptyn "Backend dependencies not found. Install now?"
-        if !errorlevel! EQU 0 (
-            cd backend
-            call :log_info "Installing backend dependencies..."
-            call npm install
-            if errorlevel 1 (
-                call :log_error "Failed to install backend dependencies"
-                cd ..
-                exit /b 1
-            )
+        cd backend
+        call :log_info "Installing backend dependencies..."
+        call npm ci 2>nul || call npm install
+        if errorlevel 1 (
+            call :log_error "Failed to install backend dependencies"
             cd ..
-            call :log_success "Backend dependencies installed"
-        ) else (
-            call :log_warning "Skipping backend dependency installation"
+            exit /b 1
         )
+        cd ..
+        call :log_success "Backend dependencies ready"
+    ) else if not exist "backend\package-lock.json" (
+        cd backend
+        call :log_info "Updating backend dependencies..."
+        call npm ci 2>nul || call npm install
+        cd ..
+        call :log_success "Backend dependencies updated"
     ) else (
-        call :log_success "Backend dependencies are installed"
-        call :promptyn "Reinstall backend dependencies?"
-        if !errorlevel! EQU 0 (
-            cd backend
-            call :log_info "Reinstalling backend dependencies..."
-            if exist "node_modules" rmdir /s /q "node_modules"
-            if exist "package-lock.json" del "package-lock.json"
-            call npm install
-            if errorlevel 1 (
-                call :log_error "Failed to reinstall backend dependencies"
-                cd ..
-                exit /b 1
-            )
-            cd ..
-            call :log_success "Backend dependencies reinstalled"
-        )
+        call :log_success "Backend dependencies are up to date"
     )
     goto :eof
 
 :setup_frontend
     call :log_info "Checking frontend setup..."
     
-    if not exist "frontend\node_modules" (
-        if exist "frontend\package.json" (
-            call :promptyn "Frontend dependencies not found. Install now?"
-            if !errorlevel! EQU 0 (
-                cd frontend
-                call :log_info "Installing frontend dependencies..."
-                call npm install
-                if errorlevel 1 (
-                    call :log_error "Failed to install frontend dependencies"
-                    cd ..
-                    exit /b 1
-                )
-                cd ..
-                call :log_success "Frontend dependencies installed"
-            ) else (
-                call :log_warning "Skipping frontend dependency installation"
-            )
-        )
-    ) else if not exist "frontend\package.json" (
-        call :log_warning "Frontend not initialized yet"
-        call :promptyn "Would you like to initialize the frontend with React + Vite?"
-        if !errorlevel! EQU 0 (
+    if exist "frontend\package.json" (
+        if not exist "frontend\node_modules" (
             cd frontend
-            call npx create-vite@latest . --template react-ts
-            call npm install
-            cd ..
-            call :log_success "Frontend initialized with React + Vite + TypeScript"
-        )
-    ) else (
-        call :log_success "Frontend dependencies are installed"
-        call :promptyn "Reinstall frontend dependencies?"
-        if !errorlevel! EQU 0 (
-            cd frontend
-            call :log_info "Reinstalling frontend dependencies..."
-            if exist "node_modules" rmdir /s /q "node_modules"
-            if exist "package-lock.json" del "package-lock.json"
-            call npm install
+            call :log_info "Installing frontend dependencies..."
+            call npm ci 2>nul || call npm install
             if errorlevel 1 (
-                call :log_error "Failed to reinstall frontend dependencies"
+                call :log_error "Failed to install frontend dependencies"
                 cd ..
                 exit /b 1
             )
             cd ..
-            call :log_success "Frontend dependencies reinstalled"
+            call :log_success "Frontend dependencies ready"
+        ) else if not exist "frontend\package-lock.json" (
+            cd frontend
+            call :log_info "Updating frontend dependencies..."
+            call npm ci 2>nul || call npm install
+            cd ..
+            call :log_success "Frontend dependencies updated"
+        ) else (
+            call :log_success "Frontend dependencies are up to date"
         )
+    ) else (
+        call :log_warning "Frontend package.json not found - frontend may not be initialized"
     )
     goto :eof
 
@@ -187,8 +151,21 @@ goto :main
     echo ================================================================
     echo                  ATILIO PROJECT SETUP ^& RUNNER
     echo ================================================================
+    if "%~1"=="--help" goto :show_help
+    if "%~1"=="-h" goto :show_help
     echo.
     goto :eof
+
+:show_help
+    echo.
+    echo Usage: run.bat [--rebuild]
+    echo.
+    echo Options:
+    echo   --rebuild   Force rebuild of Docker images
+    echo   --help, -h  Show this help message
+    echo.
+    pause
+    exit /b 0
 
 :print_section
     echo.
@@ -200,7 +177,7 @@ goto :main
 
 :main
 cls
-call :print_banner
+call :print_banner "%~1"
 call :print_section "STEP 1: ENVIRONMENT VALIDATION"
 
 call :log_info "Checking system requirements..."
@@ -278,32 +255,28 @@ if not exist "docker-compose.yml" (
 
 call :log_success "docker-compose.yml found"
 
-REM Always ask about Docker operations
-call :promptyn "Clean up and rebuild Docker containers?"
-if !errorlevel! EQU 0 (
-    call :log_info "Stopping and removing existing containers..."
+REM Smart Docker rebuild - only if needed
+if "%~1"=="--rebuild" (
+    call :log_info "Force rebuilding Docker images..."
     %DOCKER_COMPOSE_CMD% down --remove-orphans --volumes >nul 2>&1
-    
-    call :log_info "Building Docker images (this may take a few minutes)..."
     %DOCKER_COMPOSE_CMD% build --no-cache --force-rm
-    call :log_success "Docker images built successfully"
+    call :log_success "Docker images rebuilt successfully"
 ) else (
-    call :log_info "Skipping Docker rebuild - using existing images"
-    REM Still stop containers to restart fresh
-    call :log_info "Stopping existing containers for fresh start..."
-    %DOCKER_COMPOSE_CMD% down >nul 2>&1
+    docker images | findstr /C:"atilio-test" >nul 2>&1
+    if errorlevel 1 (
+        call :log_info "Building Docker images for first time..."
+        %DOCKER_COMPOSE_CMD% down --remove-orphans --volumes >nul 2>&1
+        %DOCKER_COMPOSE_CMD% build --no-cache --force-rm
+        call :log_success "Docker images built successfully"
+    ) else (
+        call :log_info "Using existing Docker images (use --rebuild flag to force rebuild)"
+        %DOCKER_COMPOSE_CMD% down >nul 2>&1
+    )
 )
 
 call :print_section "STEP 5: STARTING SERVICES"
 
-call :promptyn "Start all services now?"
-if !errorlevel! EQU 0 (
-    call :log_info "Starting database service..."
-) else (
-    call :log_info "Service startup cancelled by user"
-    pause
-    exit /b 0
-)
+call :log_info "Starting database service..."
 %DOCKER_COMPOSE_CMD% up -d db
 
 call :log_info "Waiting for database to be ready..."
@@ -336,10 +309,10 @@ call :log_info "Starting backend service..."
 %DOCKER_COMPOSE_CMD% up -d backend
 
 call :log_info "Waiting for backend to be ready..."
-timeout /t 5 /nobreak >nul
 echo|set /p="Checking backend health"
 set /a health_counter=0
 :backend_health_loop
+timeout /t 2 /nobreak >nul
 curl -f http://localhost:3001/api/v1/health >nul 2>&1
 if !errorlevel! EQU 0 (
     echo.
@@ -347,17 +320,15 @@ if !errorlevel! EQU 0 (
     goto :backend_ready
 )
 echo|set /p="."
-timeout /t 2 /nobreak >nul
 set /a health_counter+=1
-if !health_counter! LSS 12 goto :backend_health_loop
+if !health_counter! LSS 15 goto :backend_health_loop
 echo.
-call :log_warning "Backend health check failed - service may still be starting"
+call :log_warning "Backend health check timeout - service may still be starting"
 call :log_warning "Check logs with: %DOCKER_COMPOSE_CMD% logs backend"
 
 :backend_ready
 call :log_info "Starting frontend service..."
 %DOCKER_COMPOSE_CMD% up -d frontend
-timeout /t 3 /nobreak >nul
 call :log_success "Frontend service started"
 
 call :log_info "All services are now running!"
@@ -399,12 +370,7 @@ call :log_info "Current service status:"
 %DOCKER_COMPOSE_CMD% ps
 echo.
 
-call :promptyn "View live logs now?"
-if !errorlevel! EQU 0 (
-    echo.
-    call :log_info "Showing live logs (Press Ctrl+C to exit)..."
-    %DOCKER_COMPOSE_CMD% logs -f
-)
+call :log_info "Setup complete! Use '%DOCKER_COMPOSE_CMD% logs -f' to view live logs"
 
 echo.
 pause

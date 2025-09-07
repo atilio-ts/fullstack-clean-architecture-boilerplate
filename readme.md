@@ -14,11 +14,12 @@ A full-stack application built with modern web technologies using Clean Architec
 
 ### Frontend  
 - **React 19** - Modern UI library
-- **TypeScript** - Type safety
-- **Vite** - Fast build tool and dev server
-- **Ant Design** - UI component library
+- **TypeScript** - Strict type safety
+- **Vite** - Lightning-fast build tool and dev server
+- **Ant Design** - Professional UI component library
 - **React Router** - Client-side routing
-- **Axios** - HTTP client
+- **Axios** - HTTP client for API communication
+- **Auto-Generated API Client** - Type-safe client from backend Swagger
 
 ### Infrastructure
 - **Docker Compose** - Multi-container orchestration
@@ -81,6 +82,34 @@ The scripts will:
 - **Health Check:** http://localhost:3001/api/v1/health - Backend health endpoint
 - **API Docs:** http://localhost:3001/api/v1/docs - Swagger documentation
 - **Database:** localhost:5432 - PostgreSQL database server
+
+## 🗂️ File Management System
+
+This application includes a comprehensive file management system with the following features:
+
+### ✨ Features
+- **File Upload**: Support for `.txt`, `.md`, and `.json` files (max 1MB)
+- **File Operations**: List, view content, download, and delete files
+- **Type Safety**: Auto-generated TypeScript client from backend API
+- **Validation**: Client and server-side file validation
+- **Pagination**: Efficient file listing with sorting options
+
+### 📡 API Endpoints
+- `POST /api/v1/files/upload` - Upload files via multipart form data
+- `GET /api/v1/files` - List all files with pagination/sorting
+- `GET /api/v1/files/{id}` - Get file content by ID
+- `DELETE /api/v1/files/{id}` - Delete file by ID
+
+### 🔄 API Client Generation
+The frontend automatically generates a TypeScript client from the backend's Swagger specification:
+
+```bash
+# Generate API client from backend
+cd frontend && npm run api:generate-from-backend
+
+# Or from backend directory
+cd backend && npm run build:client
+```
 
 ### 📊 Service Status
 
@@ -189,22 +218,26 @@ atilio-test/
 │   └── package.json           # Dependencies & scripts
 ├── frontend/                   # React frontend application
 │   ├── src/
-│   │   ├── components/        # React components
-│   │   │   └── common/        # Shared components
-│   │   ├── pages/            # Page components
-│   │   ├── services/         # API services
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── types/            # TypeScript types
-│   │   ├── styles/           # CSS & theme files
-│   │   ├── utils/            # Utility functions
-│   │   └── constants/        # App constants
-│   ├── public/               # Static assets
-│   ├── .env.example          # Environment template
-│   ├── Dockerfile            # Container definition
-│   ├── nginx.conf            # Production server config
-│   ├── vite.config.ts        # Vite configuration
-│   ├── tsconfig.json         # TypeScript configuration
-│   └── package.json          # Dependencies & scripts
+│   │   ├── api/              # API integration layer
+│   │   │   ├── generated/    # Auto-generated API client
+│   │   │   ├── fileService.ts # High-level file operations
+│   │   │   ├── examples.ts   # Usage examples & templates
+│   │   │   ├── index.ts      # API client configuration
+│   │   │   └── README.md     # API integration docs
+│   │   ├── components/       # React components
+│   │   │   └── common/       # Shared components (layout, router)
+│   │   ├── pages/           # Page components (Home, Dashboard, Settings)
+│   │   ├── types/           # Global TypeScript types
+│   │   ├── styles/          # CSS & Ant Design theme
+│   │   └── constants/       # App constants (routes, etc.)
+│   ├── public/              # Static assets
+│   ├── .env.example         # Environment template
+│   ├── Dockerfile           # Container definition
+│   ├── nginx.conf           # Production server config
+│   ├── vite.config.ts       # Vite configuration
+│   ├── tsconfig.json        # TypeScript configuration
+│   ├── INTEGRITY_REPORT.md  # Frontend code quality report
+│   └── package.json         # Dependencies & scripts
 ├── database/                  # Database setup & migrations
 │   ├── migrations/           # Flyway migration files
 │   │   ├── V1__Initial_schema.sql
@@ -360,4 +393,8 @@ npm run lint:fix
 
 # Preview production build
 npm run preview
+
+# API Client Generation
+npm run api:generate-from-backend  # Generate from backend
+npm run api:update                 # Generate + type check
 ```

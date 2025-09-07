@@ -158,3 +158,6 @@ sketch
 
 temporary
 uploaded-files/
+
+# Generated API client
+frontend/src/api/generated/

@@ -1,8 +1,14 @@
 import { expect } from 'chai';
 import request from 'supertest';
-import app from '../../../../src/app';
+import { getTestApp } from '../../../helpers/testApp';
+
+let app: any;
 
 describe('Health Route Integration', () => {
+  before(() => {
+    app = getTestApp();
+  });
+
   describe('GET /api/v1/health', () => {
     it('should return 200 with health status', async () => {
       const response = await request(app)

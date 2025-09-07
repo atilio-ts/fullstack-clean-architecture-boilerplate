@@ -140,7 +140,7 @@
 				"additionalProperties": false
 			},
 			"ProcessedFileRequest": {
-				"description": "Data Transfer Object for processed file upload requests\nUsed internally after multer processes the multipart form data",
+				"description": "Data Transfer Object for processed file upload requests\r\nUsed internally after multer processes the multipart form data",
 				"properties": {
 					"filename": {
 						"type": "string",
