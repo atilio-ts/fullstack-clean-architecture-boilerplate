@@ -4,9 +4,7 @@ import type { MenuProps } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  HomeOutlined,
   DashboardOutlined,
-  SettingOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
@@ -45,19 +43,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const menuItems: MenuProps['items'] = [
     {
-      key: ROUTES.HOME,
-      icon: <HomeOutlined />,
-      label: 'Home',
-    },
-    {
       key: ROUTES.DASHBOARD,
       icon: <DashboardOutlined />,
       label: 'Dashboard',
-    },
-    {
-      key: ROUTES.SETTINGS,
-      icon: <SettingOutlined />,
-      label: 'Settings',
     },
   ];
 
@@ -99,7 +87,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           color: 'white',
           fontWeight: 'bold'
         }}>
-          {collapsed ? 'A' : 'App'}
+          {collapsed ? 'A' : 'Atilio'}
         </div>
         <Menu
           theme="dark"
@@ -143,7 +131,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             paddingRight: '24px',
             overflow: 'hidden'
           }}>
-            <span>Welcome back!</span>
+            <span>File Management System</span>
           </div>
         </Header>
         

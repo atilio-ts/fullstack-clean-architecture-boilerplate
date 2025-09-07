@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Typography, Alert, Spin } from 'antd';
-import { UserOutlined, ShoppingCartOutlined, DollarOutlined, TrophyOutlined, ApiOutlined, DatabaseOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { FileOutlined, ApiOutlined, DatabaseOutlined, ClockCircleOutlined, CloudServerOutlined } from '@ant-design/icons';
 import { checkHealth, type HealthResponse } from '@/api';
 
 const { Title } = Typography;
@@ -30,7 +30,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div>
-      <Title level={2}>Dashboard</Title>
+      <Title level={2}>File Management Dashboard</Title>
       
       {error && (
         <Alert
@@ -45,7 +45,7 @@ const Dashboard: React.FC = () => {
       {/* API Health Status Section */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col span={24}>
-          <Card title="API Health Status">
+          <Card title="Backend API Status">
             {loading ? (
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <Spin size="large" />
@@ -84,6 +84,7 @@ const Dashboard: React.FC = () => {
                   <Statistic
                     title="Environment"
                     value={healthData.environment}
+                    prefix={<CloudServerOutlined />}
                     valueStyle={{ color: '#fa8c16' }}
                   />
                 </Col>
@@ -95,48 +96,36 @@ const Dashboard: React.FC = () => {
         </Col>
       </Row>
       
+      {/* File Management Section - Placeholder for future implementation */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={8}>
           <Card>
             <Statistic
-              title="Total Users"
-              value={1128}
-              prefix={<UserOutlined />}
+              title="Total Files"
+              value={0}
+              prefix={<FileOutlined />}
               valueStyle={{ color: '#3f8600' }}
             />
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={8}>
           <Card>
             <Statistic
-              title="Orders"
-              value={93}
-              prefix={<ShoppingCartOutlined />}
+              title="Storage Used"
+              value="0"
+              suffix="MB"
+              prefix={<DatabaseOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={8}>
           <Card>
             <Statistic
-              title="Revenue"
-              value={11280}
-              prefix={<DollarOutlined />}
-              precision={2}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-        
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Performance"
-              value={93}
-              suffix="/ 100"
-              prefix={<TrophyOutlined />}
+              title="File Types"
+              value="txt, md, json"
               valueStyle={{ color: '#722ed1' }}
             />
           </Card>
@@ -145,8 +134,19 @@ const Dashboard: React.FC = () => {
       
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
         <Col span={24}>
-          <Card title="Welcome to your Dashboard">
-            <p>This is your main dashboard where you can view key metrics and manage your application.</p>
+          <Card title="File Management System">
+            <p>
+              Welcome to the Atilio File Management Dashboard. This system allows you to:
+            </p>
+            <ul>
+              <li>Upload and manage .txt, .md, and .json files (up to 1MB each)</li>
+              <li>View, edit, and download your files</li>
+              <li>Monitor backend API health and system status</li>
+              <li>Track file storage usage and statistics</li>
+            </ul>
+            <p>
+              <strong>Backend Status:</strong> {healthData?.status === 'OK' ? '✅ Connected' : '❌ Disconnected'}
+            </p>
           </Card>
         </Col>
       </Row>
