@@ -6,32 +6,32 @@ Production-ready PostgreSQL database with Flyway migration management, featuring
 
 - ✅ **PostgreSQL 15** - Modern relational database with full feature support
 - ✅ **Flyway 10** - Automated migration management with version control  
-- ✅ **Clean Schema** - Users table with UUID primary keys and proper indexes
-- ✅ **Development Data** - Sample users for development and testing
-- ✅ **Production Ready** - Proper constraints, indexes, and validation
+- ✅ **Clean Schema** - Files table with UUID primary keys and proper indexes
+- ✅ **File Management** - Document storage system for .txt, .md, .json files
+- ✅ **Production Ready** - Proper constraints, size limits, and validation
 
 ## 📁 Clean Structure
 
 ```
 database/
 ├── migrations/              # Flyway SQL migration files
-│   ├── V1__Initial_schema.sql    # Users table, UUID extension, indexes
-│   └── V2__Add_sample_data.sql   # Sample users for development
+│   └── V1__Initial_files_schema.sql  # Files table, UUID extension, indexes
 ├── conf/                    # Flyway configuration
 │   └── flyway.conf             # Migration settings and validation rules
 └── README.md               # This documentation
 ```
 
-### Current Schema (V2)
-- **Users Table**: UUID primary keys, email uniqueness, timestamps
-- **UUID Extension**: uuid-ossp for UUID generation
-- **Indexes**: Optimized for email lookups and date queries
-- **Sample Data**: 3 development users with example password hashes
+### Current Schema (V1)
+- **Files Table**: UUID primary keys, filename uniqueness, size constraints
+- **UUID Extension**: uuid-ossp for UUID generation  
+- **File Types**: Support for .txt, .md, .json files only
+- **Size Limits**: Maximum 1MB per file with validation
+- **Indexes**: Optimized for filename, content type, and date queries
 
 ## 🔄 Database Development Workflow
 
 ### Initial Setup (Already Done)
-The database is production-ready with a working users schema and sample data.
+The database is production-ready with a working files schema and validation constraints.
 
 ### Adding New Tables/Features
 
@@ -47,29 +47,26 @@ Before creating migrations, plan your database changes:
 Create a new migration file with proper versioning:
 ```bash
 # Create the next migration file
-touch database/migrations/V3__Add_posts_table.sql
+touch database/migrations/V2__Add_your_feature.sql
 ```
 
 #### 3. ✍️ Write Migration SQL
 Add your schema changes:
 ```sql
--- V3__Add_posts_table.sql
--- Add posts table for blog functionality
+-- V2__Add_file_tags.sql
+-- Add tags functionality for file categorization
 
-CREATE TABLE posts (
+CREATE TABLE file_tags (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title VARCHAR(255) NOT NULL,
-    content TEXT,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    published BOOLEAN DEFAULT false,
+    file_id UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+    tag_name VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    UNIQUE(file_id, tag_name)
 );
 
 -- Add indexes for common queries
-CREATE INDEX idx_posts_user_id ON posts(user_id);
-CREATE INDEX idx_posts_published ON posts(published);
-CREATE INDEX idx_posts_created_at ON posts(created_at);
+CREATE INDEX idx_file_tags_file_id ON file_tags(file_id);
+CREATE INDEX idx_file_tags_tag_name ON file_tags(tag_name);
 ```
 
 #### 4. 🧪 Test Migration Locally
@@ -107,31 +104,32 @@ Update backend entities and repositories to match your new schema.
 
 #### Adding a Column
 ```sql
--- V4__Add_user_avatar_url.sql
-ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255);
-CREATE INDEX idx_users_avatar_url ON users(avatar_url) WHERE avatar_url IS NOT NULL;
+-- V3__Add_file_description.sql
+ALTER TABLE files ADD COLUMN description TEXT;
+CREATE INDEX idx_files_description ON files(description) WHERE description IS NOT NULL;
 ```
 
 #### Creating Relationships
 ```sql
--- V5__Add_user_roles.sql
-CREATE TABLE user_roles (
+-- V4__Add_file_versions.sql
+CREATE TABLE file_versions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role_name VARCHAR(50) NOT NULL,
-    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, role_name)
+    file_id UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+    version_number INTEGER NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(file_id, version_number)
 );
 
-CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
-CREATE INDEX idx_user_roles_role_name ON user_roles(role_name);
+CREATE INDEX idx_file_versions_file_id ON file_versions(file_id);
+CREATE INDEX idx_file_versions_created_at ON file_versions(created_at);
 ```
 
 #### Adding Constraints
 ```sql
--- V6__Add_email_validation.sql
-ALTER TABLE users ADD CONSTRAINT email_format_check 
-CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+-- V5__Add_filename_validation.sql
+ALTER TABLE files ADD CONSTRAINT filename_format_check 
+CHECK (filename ~ '^[^<>:"/\\|?*\x00-\x1f]+\.(txt|md|json)$');
 ```
 
 ## 🛠️ Migration Commands
@@ -331,32 +329,32 @@ docker run --rm -v $(pwd)/migrations:/flyway/sql \
 
 ## 🎯 Current Database Schema
 
-### Users Table (V1)
+### Files Table (V1)
 ```sql
-CREATE TABLE users (
+CREATE TABLE files (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL UNIQUE,
+    file_size INTEGER NOT NULL CHECK (file_size > 0 AND file_size <= 1048576), -- Max 1MB
+    content_type VARCHAR(50) NOT NULL CHECK (content_type IN ('text/plain', 'text/markdown', 'application/json')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_created_at ON users(created_at);
+-- Indexes for optimal query performance
+CREATE INDEX idx_files_filename ON files(filename);
+CREATE INDEX idx_files_created_at ON files(created_at);
+CREATE INDEX idx_files_content_type ON files(content_type);
+CREATE UNIQUE INDEX idx_files_file_path ON files(file_path);
 ```
-
-### Sample Data (V2)
-- **3 development users** with example bcrypt password hashes
-- **Test data** for local development and frontend integration
-- **Proper UUID primary keys** for all user records
 
 ### Database Features
 - ✅ **UUID Extension** - uuid-ossp for UUID generation
-- ✅ **Proper Indexing** - Optimized for common query patterns
-- ✅ **Referential Integrity** - Foreign key constraints ready
-- ✅ **Timestamps** - Automatic created_at/updated_at tracking
-- ✅ **Sample Data** - Ready for immediate development use
+- ✅ **File Type Validation** - Only .txt, .md, .json files allowed
+- ✅ **Size Constraints** - Maximum 1MB per file enforced at database level
+- ✅ **Proper Indexing** - Optimized for filename, content type, and date queries
+- ✅ **Referential Integrity** - Ready for future table relationships
+- ✅ **Timestamps** - Automatic created_at/updated_at tracking with triggers
+- ✅ **Unique Constraints** - Prevents duplicate file paths
 
-The database is **production-ready** and serves as an excellent foundation for extending with additional tables and features using the established migration patterns.
+The database is **production-ready** for document management and serves as an excellent foundation for extending with additional features like file versioning, tagging, or user ownership using the established migration patterns.
