@@ -574,4 +574,23 @@ The project is now in an excellent state for continued development with:
 - **Health Check**: Verify http://localhost:3001/api/v1/health is accessible
 - **API Documentation**: Check http://localhost:3001/api/v1/docs for Swagger UI
 
+## 📝 Git Commit Guidelines
+
+When asked for git commit messages, use **concise format**:
+- **Structure**: `type: brief summary - key changes only`
+- **Length**: Maximum 1-4 bullet points for details
+- **Focus**: Main changes and critical fixes only
+- **Template**:
+  ```
+  type: brief summary of main change
+  
+  - Key change 1
+  - Key change 2 (if needed)
+  - Critical fix (if applicable)
+  
+  🤖 Generated with [Claude Code](https://claude.ai/code)
+  
+  Co-Authored-By: Claude <noreply@anthropic.com>
+  ```
+
 Remember: This project prioritizes **clean architecture**, **type safety**, and **maintainable code** over quick solutions.

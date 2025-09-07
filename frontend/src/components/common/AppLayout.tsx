@@ -5,6 +5,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DashboardOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
@@ -46,6 +47,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       key: ROUTES.DASHBOARD,
       icon: <DashboardOutlined />,
       label: 'Dashboard',
+    },
+    {
+      key: ROUTES.FILES,
+      icon: <FileTextOutlined />,
+      label: 'Files',
     },
   ];
 

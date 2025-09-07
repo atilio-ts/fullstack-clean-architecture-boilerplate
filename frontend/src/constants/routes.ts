@@ -1,7 +1,4 @@
 export const ROUTES = {
   DASHBOARD: '/',
-  PROFILE: '/profile',
-  LOGIN: '/login',
+  FILES: '/files',
 } as const;
-
-export const PUBLIC_ROUTES = [ROUTES.LOGIN] as const;
