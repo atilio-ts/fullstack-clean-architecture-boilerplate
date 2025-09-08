@@ -157,3 +157,7 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/node,react
 
 temporary
+uploaded-files/
+
+# Generated API client
+frontend/src/api/generated/

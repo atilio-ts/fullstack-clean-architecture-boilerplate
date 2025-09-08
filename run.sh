@@ -95,61 +95,32 @@ EOF
 setup_backend() {
     log_info "Checking backend setup..."
     
-    if [ ! -d "backend/node_modules" ]; then
-        if promptyn "Backend dependencies not found. Install now?"; then
-            cd backend
-            log_info "Installing backend dependencies..."
-            npm install
-            cd ..
-            log_success "Backend dependencies installed"
-        else
-            log_warning "Skipping backend dependency installation"
-        fi
+    if [ ! -d "backend/node_modules" ] || [ ! -f "backend/package-lock.json" ]; then
+        cd backend
+        log_info "Installing/updating backend dependencies..."
+        npm ci 2>/dev/null || npm install
+        cd ..
+        log_success "Backend dependencies ready"
     else
-        log_success "Backend dependencies are installed"
-        if promptyn "Reinstall backend dependencies?"; then
-            cd backend
-            log_info "Reinstalling backend dependencies..."
-            rm -rf node_modules package-lock.json
-            npm install
-            cd ..
-            log_success "Backend dependencies reinstalled"
-        fi
+        log_success "Backend dependencies are up to date"
     fi
 }
 
 setup_frontend() {
     log_info "Checking frontend setup..."
     
-    if [ ! -d "frontend/node_modules" ] && [ -f "frontend/package.json" ]; then
-        if promptyn "Frontend dependencies not found. Install now?"; then
+    if [ -f "frontend/package.json" ]; then
+        if [ ! -d "frontend/node_modules" ] || [ ! -f "frontend/package-lock.json" ]; then
             cd frontend
-            log_info "Installing frontend dependencies..."
-            npm install
+            log_info "Installing/updating frontend dependencies..."
+            npm ci 2>/dev/null || npm install
             cd ..
-            log_success "Frontend dependencies installed"
+            log_success "Frontend dependencies ready"
         else
-            log_warning "Skipping frontend dependency installation"
-        fi
-    elif [ ! -f "frontend/package.json" ]; then
-        log_warning "Frontend not initialized yet"
-        if promptyn "Would you like to initialize the frontend with React + Vite?"; then
-            cd frontend
-            npx create-vite@latest . --template react-ts
-            npm install
-            cd ..
-            log_success "Frontend initialized with React + Vite + TypeScript"
+            log_success "Frontend dependencies are up to date"
         fi
     else
-        log_success "Frontend dependencies are installed"
-        if promptyn "Reinstall frontend dependencies?"; then
-            cd frontend
-            log_info "Reinstalling frontend dependencies..."
-            rm -rf node_modules package-lock.json
-            npm install
-            cd ..
-            log_success "Frontend dependencies reinstalled"
-        fi
+        log_warning "Frontend package.json not found - frontend may not be initialized"
     fi
 }
 
@@ -158,6 +129,16 @@ print_banner() {
     echo "==============================================================="
     echo "                    ATILIO PROJECT SETUP & RUNNER"
     echo "==============================================================="
+    if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+        echo ""
+        echo "Usage: ./run.sh [--rebuild]"
+        echo ""
+        echo "Options:"
+        echo "  --rebuild   Force rebuild of Docker images"
+        echo "  --help, -h  Show this help message"
+        echo ""
+        exit 0
+    fi
     echo ""
 }
 
@@ -171,7 +152,7 @@ print_section() {
 
 # Main script
 clear
-print_banner
+print_banner "$1"
 print_section "STEP 1: ENVIRONMENT VALIDATION"
 
 log_info "Checking system requirements..."
@@ -223,30 +204,21 @@ fi
 
 log_success "docker-compose.yml found"
 
-# Always ask about Docker operations
-if promptyn "Clean up and rebuild Docker containers?"; then
-    log_info "Stopping and removing existing containers..."
+# Smart Docker rebuild - only if needed
+if [ "$1" = "--rebuild" ] || ! docker images | grep -q "atilio-test"; then
+    log_info "Building/rebuilding Docker images..."
     docker-compose down --remove-orphans --volumes 2>/dev/null || true
-    
-    log_info "Building Docker images (this may take a few minutes)..."
     docker-compose build --no-cache --force-rm
     log_success "Docker images built successfully"
 else
-    log_info "Skipping Docker rebuild - using existing images"
-    # Still stop containers to restart fresh
-    log_info "Stopping existing containers for fresh start..."
+    log_info "Using existing Docker images (use --rebuild flag to force rebuild)"
     docker-compose down 2>/dev/null || true
 fi
 
 print_section "STEP 5: STARTING SERVICES"
 
-if promptyn "Start all services now?"; then
-    log_info "Starting database service..."
-    docker-compose up -d db
-else
-    log_info "Service startup cancelled by user"
-    exit 0
-fi
+log_info "Starting database service..."
+docker-compose up -d db
 
 log_info "Waiting for database to be ready..."
 timeout=60
@@ -272,26 +244,24 @@ log_info "Starting backend service..."
 docker-compose up -d backend
 
 log_info "Waiting for backend to be ready..."
-sleep 5
 echo -n "Checking backend health"
-for i in {1..12}; do
+for i in {1..15}; do
+    sleep 2
     if curl -f http://localhost:3001/api/v1/health &> /dev/null; then
         echo ""
         log_success "Backend is running and healthy"
         break
     fi
     echo -n "."
-    sleep 2
-    if [ $i -eq 12 ]; then
+    if [ $i -eq 15 ]; then
         echo ""
-        log_warning "Backend health check failed - service may still be starting"
+        log_warning "Backend health check timeout - service may still be starting"
         log_warning "Check logs with: docker-compose logs backend"
     fi
 done
 
 log_info "Starting frontend service..."
 docker-compose up -d frontend
-sleep 3
 log_success "Frontend service started"
 
 log_info "All services are now running!"
@@ -333,8 +303,4 @@ log_info "Current service status:"
 docker-compose ps
 echo ""
 
-if promptyn "View live logs now?"; then
-    echo ""
-    log_info "Showing live logs (Press Ctrl+C to exit)..."
-    docker-compose logs -f
-fi
+log_info "Setup complete! Use 'docker-compose logs -f' to view live logs"

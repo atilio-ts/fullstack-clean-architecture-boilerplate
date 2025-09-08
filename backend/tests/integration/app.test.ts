@@ -1,8 +1,14 @@
 import { expect } from 'chai';
 import request from 'supertest';
-import app from '../../src/app';
+import { getTestApp } from '../helpers/testApp';
+
+let app: any;
 
 describe('Express App Integration', () => {
+  before(() => {
+    app = getTestApp();
+  });
+
   describe('Middleware Configuration', () => {
     it('should have CORS enabled', async () => {
       const response = await request(app)

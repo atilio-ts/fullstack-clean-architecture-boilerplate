@@ -13,13 +13,13 @@
     "start": "npm run dev",
     "docker:build": "docker build -t atilio-frontend .",
     "docker:run": "docker run -p 3000:80 atilio-frontend",
-    "api:generate": "swagger-typescript-api generate -p ../backend/build/swagger.json -o ./src/api -n api.ts --axios",
-    "api:generate-watch": "swagger-typescript-api generate -p ../backend/build/swagger.json -o ./src/api -n api.ts --axios && npm run typecheck"
+    "api:generate": "cd ../backend && npm run build:swagger && cd ../frontend && cp ../backend/src/api/generated/api-client.ts ./src/api/generated/api-client.ts",
+    "api:generate-from-backend": "cd ../backend && npm run build:client",
+    "api:update": "npm run api:generate && npm run typecheck"
   },
   "dependencies": {
     "antd": "^5.27.2",
     "axios": "^1.11.0",
-    "dayjs": "^1.11.18",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.2"

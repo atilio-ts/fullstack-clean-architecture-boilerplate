@@ -1,5 +1,5 @@
-import { Api } from './api';
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { Api } from './generated/api-client';
+import type { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
@@ -15,7 +15,7 @@ export const apiClient = new Api({
 
 // Add request interceptor for authentication
 apiClient.instance.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('authToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -41,13 +41,23 @@ apiClient.instance.interceptors.response.use(
 );
 
 // Export types for use throughout the app
-export type { HealthResponse } from './api';
+export type { 
+  HealthResponse,
+  FileResponse,
+  FileListResponse,
+  FileContentResponse,
+  DeleteFileResponse,
+  ProcessedFileRequest,
+  GetAllFilesParamsSortByEnum,
+  GetAllFilesParamsSortOrderEnum
+} from './generated/api-client';
 
 // Export the Api class for advanced use cases
-export { Api } from './api';
+export { Api } from './generated/api-client';
 
 // Export specific API endpoints for easier importing
 export const healthApi = apiClient.health;
+export const filesApi = apiClient.files;
 
 // Health check utility function
 export const checkHealth = async () => {
@@ -59,3 +69,17 @@ export const checkHealth = async () => {
     throw error;
   }
 };
+
+// Export file service and utilities
+export { FileService } from './fileService';
+export {
+  uploadFile,
+  uploadTextFile,
+  getAllFiles,
+  getFileContent,
+  deleteFile,
+  downloadFile,
+  triggerDownload,
+  validateFile,
+  formatFileSize
+} from './fileService';
